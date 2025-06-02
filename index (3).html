@@ -1,0 +1,585 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Capture Your Moments - Polok</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #ffe5b4 0%, #ffcc99 50%, #ffebcc 100%);
+    }
+    .fade-in {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.8s ease-out;
+    }
+    .fade-in.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .price-tag {
+      background: linear-gradient(45deg, #ff6f61, #ff9e2d);
+      box-shadow: 0 6px 20px rgba(255, 111, 97, 0.4);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .price-tag:hover {
+      transform: scale(1.1) rotate(2deg);
+      box-shadow: 0 8px 25px rgba(255, 111, 97, 0.6);
+    }
+    .btn-primary {
+      background: linear-gradient(45deg, #ff6f61, #ff9e2d);
+      box-shadow: 0 4px 15px rgba(255, 111, 97, 0.4);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .btn-primary:hover {
+      transform: translateY(-5px) scale(1.05);
+      box-shadow: 0 6px 20px rgba(255, 111, 97, 0.6);
+      animation: bounce 0.5s ease;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(-5px); }
+      50% { transform: translateY(-10px); }
+    }
+    .nav-link {
+      transition: color 0.3s ease, text-shadow 0.3s ease, transform 0.3s ease;
+    }
+    .nav-link:hover {
+      color: #ff6f61;
+      text-shadow: 0 0 10px rgba(255, 111, 97, 0.5);
+      transform: scale(1.05);
+    }
+    .card {
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      transition: transform 0.4s ease, box-shadow 0.4s ease;
+    }
+    .card:hover {
+      transform: translateY(-10px) rotateX(5deg);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+    }
+    .hero-section {
+      background-attachment: fixed;
+      background-size: cover;
+      background-position: center;
+    }
+    .hero-overlay {
+      background: rgba(0, 0, 0, 0.3);
+    }
+    .social-icon {
+      transition: transform 0.3s ease, color 0.3s ease;
+    }
+    .social-icon:hover {
+      transform: scale(1.2);
+      color: #ff6f61;
+    }
+    .logo {
+      height: 50px;
+      transition: transform 0.3s ease;
+    }
+    .logo:hover {
+      transform: scale(1.1);
+    }
+    .payment-icon {
+      height: 40px;
+      transition: transform 0.3s ease;
+    }
+    .payment-icon:hover {
+      transform: scale(1.1);
+    }
+    .gallery-img {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .gallery-img:hover {
+      transform: scale(1.05);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    }
+    .navbar {
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar bg-gradient-to-r from-orange-600 to-red-500 text-white p-4 sticky top-0 z-10">
+    <div class="container mx-auto flex justify-between items-center">
+      <a href="#home"><img src="https://via.placeholder.com/150x50?text=Polok+Logo" alt="Polok Logo" class="logo"></a>
+      <ul class="flex space-x-8">
+        <li><a href="#home" class="nav-link text-xl font-semibold">Home</a></li>
+        <li><a href="#packages" class="nav-link text-xl font-semibold">Packages</a></li>
+        <li><a href="#gallery" class="nav-link text-xl font-semibold">Gallery</a></li>
+        <li><a href="#about" class="nav-link text-xl font-semibold">About Us</a></li>
+        <li><a href="#contact" class="nav-link text-xl font-semibold">Contact Us</a></li>
+        <li><a href="#booking" class="nav-link text-xl font-semibold">Book Now</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section id="home" class="relative hero-section bg-cover bg-center py-32 text-white fade-in">
+    <div class="absolute inset-0 bg-[url('https://via.placeholder.com/1200x600?text=Your+Hero+Image')] bg-cover bg-center"></div>
+    <div class="absolute inset-0 hero-overlay"></div>
+    <div class="container mx-auto relative z-10 text-center">
+      <h2 class="text-6xl font-bold mb-6 tracking-tight">Capture Your Moments</h2>
+      <p class="text-2xl mb-8 max-w-3xl mx-auto">Professional photography and cinematography for weddings, portraits, and events. Book today!</p>
+      <a href="#booking" class="btn-primary text-white px-10 py-4 rounded-full text-2xl font-semibold">Get Started</a>
+    </div>
+  </section>
+
+  <!-- Packages Section -->
+  <section id="packages" class="py-28 fade-in">
+    <div class="container mx-auto text-center">
+      <h2 class="text-5xl font-bold mb-16 text-gray-800 tracking-wide">Our Packages</h2>
+
+      <!-- Wedding Series Combo Packages -->
+      <div class="mb-20">
+        <h3 class="text-4xl font-semibold mb-12 text-gray-800">Wedding Series Combo Packages</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-12 px-6">
+          <div class="card p-10 rounded-2xl">
+            <h4 class="text-3xl font-semibold mb-6 text-gray-800">Basic Plan</h4>
+            <p class="text-2xl mb-8 price-tag inline-block text-black font-bold px-8 py-4 rounded-full">17000 BDT</p>
+            <ul class="text-left mb-8 text-gray-700">
+              <li class="mb-3">01 Senior Photographer</li>
+              <li class="mb-3">01 Senior Cinematographer</li>
+              <li class="mb-3">Unlimited Clicks 150+ Photo Edit</li>
+              <li class="mb-3">01 Promo and 01 Full Movie</li>
+              <li class="mb-3">All Soft Copy Gives on Pendrive</li>
+              <li class="mb-3">Duration 5 hours Max</li>
+              <li class="mb-3">*Expenses will be added separately</li>
+              <li class="mb-3">70% payment required in advance for booking, rest 30% due on the day of event</li>
+            </ul>
+            <a href="#booking" class="btn-primary text-white px-8 py-3 rounded-full font-semibold text-lg">Book Now</a>
+          </div>
+          <div class="card p-10 rounded-2xl">
+            <h4 class="text-3xl font-semibold mb-6 text-gray-800">Standard Plan (Recommended)</h4>
+            <p class="text-2xl mb-8 price-tag inline-block text-black font-bold px-8 py-4 rounded-full">30000 BDT</p>
+            <ul class="text-left mb-8 text-gray-700">
+              <li class="mb-3">01 Core Photographer</li>
+              <li class="mb-3">01 Senior Photographer</li>
+              <li class="mb-3">01 Core Cinematographer</li>
+              <li class="mb-3">Unlimited Access File 300+ Photo Edit</li>
+              <li class="mb-3">01 Soft Copy Gives on Pendrive</li>
+              <li class="mb-3">All Soft Copy Gives on Pendrive</li>
+              <li class="mb-3">Photobook (12x18) Size</li>
+              <li class="mb-3">Duration 7 hours Max</li>
+              <li class="mb-3">*Expenses will be added separately</li>
+              <li class="mb-3">70% payment required in advance for booking, rest 30% due on the day of event</li>
+            </ul>
+            <a href="#booking" class="btn-primary text-white px-8 py-3 rounded-full font-semibold text-lg">Book Now</a>
+          </div>
+          <div class="card p-10 rounded-2xl">
+            <h4 class="text-3xl font-semibold mb-6 text-gray-800">Premium Plan</h4>
+            <p class="text-2xl mb-8 price-tag inline-block text-black font-bold px-8 py-4 rounded-full">45000 BDT</p>
+            <ul class="text-left mb-8 text-gray-700">
+              <li class="mb-3">01 Core Photographer</li>
+              <li class="mb-3">02 Senior Photographer</li>
+              <li class="mb-3">01 Senior Cinematographer</li>
+              <li class="mb-3">Unlimited Access File 500+ Photo Edit</li>
+              <li class="mb-3">01 Promo and 01 Full Movie</li>
+              <li class="mb-3">All Soft Copy Gives on Pendrive</li>
+              <li class="mb-3">Photobook (12x18) Size</li>
+              <li class="mb-3">Photo Album 4R Size</li>
+              <li class="mb-3">Duration 8 hours Max</li>
+              <li class="mb-3">*Expenses will be added separately</li>
+              <li class="mb-3">70% payment required in advance for booking, rest 30% due on the day of event</li>
+            </ul>
+            <a href="#booking" class="btn-primary text-white px-8 py-3 rounded-full font-semibold text-lg">Book Now</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Photography Packages -->
+      <div class="mb-20 bg-gradient-to-r from-orange-50 to-peach-50 py-16">
+        <h3 class="text-4xl font-semibold mb-12 text-gray-800">Photography Packages</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-12 px-6">
+          <div class="card p-10 rounded-2xl">
+            <h4 class="text-3xl font-semibold mb-6 text-gray-800">Package One</h4>
+            <p class="text-2xl mb-8 price-tag inline-block text-black font-bold px-8 py-4 rounded-full">5000 BDT</p>
+            <ul class="text-left mb-8 text-gray-700">
+              <li class="mb-3">01 Photographer</li>
+              <li class="mb-3">5 hours of coverage</li>
+              <li class="mb-3">Unlimited File Access</li>
+              <li class="mb-3">Special Edit 150+ Photos</li>
+              <li class="mb-3">All images online</li>
+              <li class="mb-3">*Expenses will be added</li>
+            </ul>
+            <a href="#booking" class="btn-primary text-white px-8 py-3 rounded-full font-semibold text-lg">Book Now</a>
+          </div>
+          <div class="card p-10 rounded-2xl">
+            <h4 class="text-3xl font-semibold mb-6 text-gray-800">Package Two</h4>
+            <p class="text-2xl mb-8 price-tag inline-block text-black font-bold px-8 py-4 rounded-full">12000 BDT</p>
+            <ul class="text-left mb-8 text-gray-700">
+              <li class="mb-3">02 Photographers</li>
+              <li class="mb-3">6 hours of coverage</li>
+              <li class="mb-3">Unlimited File Access</li>
+              <li class="mb-3">Special Edit 250+ Photos</li>
+              <li class="mb-3">All images online</li>
+              <li class="mb-3">*Expenses will be added</li>
+            </ul>
+            <a href="#booking" class="btn-primary text-white px-8 py-3 rounded-full font-semibold text-lg">Book Now</a>
+          </div>
+          <div class="card p-10 rounded-2xl">
+            <h4 class="text-3xl font-semibold mb-6 text-gray-800">Package Three</h4>
+            <p class="text-2xl mb-8 price-tag inline-block text-black font-bold px-8 py-4 rounded-full">21000 BDT</p>
+            <ul class="text-left mb-8 text-gray-700">
+              <li class="mb-3">03 Photographers</li>
+              <li class="mb-3">8 hours of coverage</li>
+              <li class="mb-3">Unlimited File Access</li>
+              <li class="mb-3">Special Edit 400+ Photos</li>
+              <li class="mb-3">All images online</li>
+              <li class="mb-3">*Expenses will be added</li>
+            </ul>
+            <a href="#booking" class="btn-primary text-white px-8 py-3 rounded-full font-semibold text-lg">Book Now</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Drone Cinematography Packages -->
+      <div class="mb-20">
+        <h3 class="text-4xl font-semibold mb-12 text-gray-800">Drone Cinematography Packages</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-12 px-6">
+          <div class="card p-10 rounded-2xl">
+            <h4 class="text-3xl font-semibold mb-6 text-gray-800">Package One</h4>
+            <p class="text-2xl mb-8 price-tag inline-block text-black font-bold px-8 py-4 rounded-full">7500 BDT</p>
+            <ul class="text-left mb-8 text-gray-700">
+              <li class="mb-3">01 Drone Operator</li>
+              <li class="mb-3">Duration: 1 hour</li>
+              <li class="mb-3">Flying time: 25-30min</li>
+              <li class="mb-3">01 Short or Full Video</li>
+              <li class="mb-3">All images online</li>
+              <li class="mb-3">*Expenses will be added</li>
+            </ul>
+            <a href="#booking" class="btn-primary text-white px-8 py-3 rounded-full font-semibold text-lg">Book Now</a>
+          </div>
+          <div class="card p-10 rounded-2xl">
+            <h4 class="text-3xl font-semibold mb-6 text-gray-800">Package Two</h4>
+            <p class="text-2xl mb-8 price-tag inline-block text-black font-bold px-8 py-4 rounded-full">9500 BDT</p>
+            <ul class="text-left mb-8 text-gray-700">
+              <li class="mb-3">01 Drone Operator</li>
+              <li class="mb-3">Duration: 2 hours</li>
+              <li class="mb-3">Flying time: 40-55min</li>
+              <li class="mb-3">01 Short or Full Video</li>
+              <li class="mb-3">All images online</li>
+              <li class="mb-3">*Expenses will be added</li>
+            </ul>
+            <a href="#booking" class="btn-primary text-white px-8 py-3 rounded-full font-semibold text-lg">Book Now</a>
+          </div>
+          <div class="card p-10 rounded-2xl">
+            <h4 class="text-3xl font-semibold mb-6 text-gray-800">Package Three</h4>
+            <p class="text-2xl mb-8 price-tag inline-block text-black font-bold px-8 py-4 rounded-full">11500 BDT</p>
+            <ul class="text-left mb-8 text-gray-700">
+              <li class="mb-3">01 Drone Operator</li>
+              <li class="mb-3">Duration: 3 hours</li>
+              <li class="mb-3">Flying time: 1 hour max</li>
+              <li class="mb-3">01 Short or Full Video</li>
+              <li class="mb-3">All images online</li>
+              <li class="mb-3">*Expenses will be added</li>
+            </ul>
+            <a href="#booking" class="btn-primary text-white px-8 py-3 rounded-full font-semibold text-lg">Book Now</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cinematography Packages -->
+      <div class="mb-20 bg-gradient-to-r from-orange-50 to-peach-50 py-16">
+        <h3 class="text-4xl font-semibold mb-12 text-gray-800">Cinematography Packages</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-12 px-6">
+          <div class="card p-10 rounded-2xl">
+            <h4 class="text-3xl font-semibold mb-6 text-gray-800">Package One</h4>
+            <p class="text-2xl mb-8 price-tag inline-block text-black font-bold px-8 py-4 rounded-full">7000 BDT</p>
+            <ul class="text-left mb-8 text-gray-700">
+              <li class="mb-3">01 Cinematographer</li>
+              <li class="mb-3">4 hours of coverage</li>
+              <li class="mb-3">Unlimited File Access</li>
+              <li class="mb-3">01 Promo 01 Full Movie</li>
+              <li class="mb-3">*Expenses will be added</li>
+            </ul>
+            <a href="#booking" class="btn-primary text-white px-8 py-3 rounded-full font-semibold text-lg">Book Now</a>
+          </div>
+          <div class="card p-10 rounded-2xl">
+            <h4 class="text-3xl font-semibold mb-6 text-gray-800">Package Two</h4>
+            <p class="text-2xl mb-8 price-tag inline-block text-black font-bold px-8 py-4 rounded-full">9000 BDT</p>
+            <ul class="text-left mb-8 text-gray-700">
+              <li class="mb-3">01 Cinematographer</li>
+              <li class="mb-3">5 hours of coverage</li>
+              <li class="mb-3">Unlimited File Access</li>
+              <li class="mb-3">01 Promo 01 Full Movie</li>
+              <li class="mb-3">*Expenses will be added</li>
+            </ul>
+            <a href="#booking" class="btn-primary text-white px-8 py-3 rounded-full font-semibold text-lg">Book Now</a>
+          </div>
+          <div class="card p-10 rounded-2xl">
+            <h4 class="text-3xl font-semibold mb-6 text-gray-800">Package Three</h4>
+            <p class="text-2xl mb-8 price-tag inline-block text-black font-bold px-8 py-4 rounded-full">18000 BDT</p>
+            <ul class="text-left mb-8 text-gray-700">
+              <li class="mb-3">02 Cinematographers</li>
+              <li class="mb-3">7 hours of coverage</li>
+              <li class="mb-3">Unlimited File Access</li>
+              <li class="mb-3">01 Promo 01 Full Movie</li>
+              <li class="mb-3">All file gives on pendrive</li>
+              <li class="mb-3">*Expenses will be added</li>
+            </ul>
+            <a href="#booking" class="btn-primary text-white px-8 py-3 rounded-full font-semibold text-lg">Book Now</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Combo Packages -->
+      <div class="mb-20">
+        <h3 class="text-4xl font-semibold mb-12 text-gray-800">Combo Packages</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-12 px-6">
+          <div class="card p-10 rounded-2xl">
+            <h4 class="text-3xl font-semibold mb-6 text-gray-800">Package One</h4>
+            <p class="text-2xl mb-8 price-tag inline-block text-black font-bold px-8 py-4 rounded-full">12000 BDT</p>
+            <ul class="text-left mb-8 text-gray-700">
+              <li class="mb-3">01 Photographer</li>
+              <li class="mb-3">01 Cinematographer</li>
+              <li class="mb-3">5 hours of coverage</li>
+              <li class="mb-3">Unlimited File Access</li>
+              <li class="mb-3">Special Edit 150+ Photos</li>
+              <li class="mb-3">01 Promo 01 Full Movie</li>
+              <li class="mb-3">All images online</li>
+              <li class="mb-3">*Expenses will be added</li>
+            </ul>
+            <a href="#booking" class="btn-primary text-white px-8 py-3 rounded-full font-semibold text-lg">Book Now</a>
+          </div>
+          <div class="card p-10 rounded-2xl">
+            <h4 class="text-3xl font-semibold mb-6 text-gray-800">Package Two</h4>
+            <p class="text-2xl mb-8 price-tag inline-block text-black font-bold px-8 py-4 rounded-full">21000 BDT</p>
+            <ul class="text-left mb-8 text-gray-700">
+              <li class="mb-3">02 Photographers</li>
+              <li class="mb-3">01 Cinematographer</li>
+              <li class="mb-3">6 hours of coverage</li>
+              <li class="mb-3">Unlimited File Access</li>
+              <li class="mb-3">Special Edit 250+ Photos</li>
+              <li class="mb-3">01 Promo 01 Full Movie</li>
+              <li class="mb-3">All images online or Pendrive</li>
+              <li class="mb-3">*Expenses will be added</li>
+            </ul>
+            <a href="#booking" class="btn-primary text-white px-8 py-3 rounded-full font-semibold text-lg">Book Now</a>
+          </div>
+          <div class="card p-10 rounded-2xl">
+            <h4 class="text-3xl font-semibold mb-6 text-gray-800">Package Three</h4>
+            <p class="text-2xl mb-8 price-tag inline-block text-black font-bold px-8 py-4 rounded-full">39000 BDT</p>
+            <ul class="text-left mb-8 text-gray-700">
+              <li class="mb-3">03 Photographers</li>
+              <li class="mb-3">02 Cinematographers</li>
+              <li class="mb-3">8 hours of coverage</li>
+              <li class="mb-3">Unlimited File Access</li>
+              <li class="mb-3">Special Edit 400+ Photos</li>
+              <li class="mb-3">01 Promo 01 Full Movie</li>
+              <li class="mb-3">All images online or Pendrive</li>
+              <li class="mb-3">*Expenses will be added</li>
+            </ul>
+            <a href="#booking" class="btn-primary text-white px-8 py-3 rounded-full font-semibold text-lg">Book Now</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Gallery Section -->
+  <section id="gallery" class="py-28 bg-gradient-to-r from-orange-50 to-peach-50 fade-in">
+    <div class="container mx-auto text-center">
+      <h2 class="text-5xl font-bold mb-12 text-gray-800 tracking-wide">Our Portfolio</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 px-6">
+        <div>
+          <img src="https://via.placeholder.com/400x300?text=Portfolio+1" alt="Portfolio 1" class="gallery-img w-full h-64 object-cover rounded-lg">
+        </div>
+        <div>
+          <img src="https://via.placeholder.com/400x300?text=Portfolio+2" alt="Portfolio 2" class="gallery-img w-full h-64 object-cover rounded-lg">
+        </div>
+        <div>
+          <img src="https://via.placeholder.com/400x300?text=Portfolio+3" alt="Portfolio 3" class="gallery-img w-full h-64 object-cover rounded-lg">
+        </div>
+        <div>
+          <img src="https://via.placeholder.com/400x300?text=Portfolio+4" alt="Portfolio 4" class="gallery-img w-full h-64 object-cover rounded-lg">
+        </div>
+        <div>
+          <img src="https://via.placeholder.com/400x300?text=Portfolio+5" alt="Portfolio 5" class="gallery-img w-full h-64 object-cover rounded-lg">
+        </div>
+        <div>
+          <img src="https://via.placeholder.com/400x300?text=Portfolio+6" alt="Portfolio 6" class="gallery-img w-full h-64 object-cover rounded-lg">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- About Us Section -->
+  <section id="about" class="py-28 bg-gradient-to-r from-orange-100 to-peach-100 fade-in">
+    <div class="container mx-auto text-center">
+      <h2 class="text-5xl font-bold mb-12 text-gray-800 tracking-wide">About Us</h2>
+      <p class="text-2xl max-w-4xl mx-auto mb-6 text-gray-700">Polok is dedicated to capturing your special moments with creativity and professionalism. With years of experience, our team specializes in weddings, portraits, events, and cinematography, delivering high-quality services that last a lifetime.</p>
+      <p class="text-2xl max-w-4xl mx-auto text-gray-700">We use state-of-the-art equipment and a passion for storytelling to make every moment unforgettable.</p>
+    </div>
+  </section>
+
+  <!-- Contact Us Section -->
+  <section id="contact" class="py-28 fade-in">
+    <div class="container mx-auto text-center">
+      <h2 class="text-5xl font-bold mb-12 text-gray-800 tracking-wide">Contact Us</h2>
+      <p class="text-2xl mb-8 text-gray-700">Reach out to discuss your photography and cinematography needs!</p>
+      <p class="text-xl mb-6 text-gray-700">Email: <a href="mailto:nirjordey842@gmail.com" class="text-orange-500 hover:text-orange-400">nirjordey842@gmail.com</a></p>
+      <p class="text-xl mb-8 text-gray-700">Phone: <a href="tel:+8801873107499" class="text-orange-500 hover:text-orange-400">+880-1873107499</a></p>
+      <div class="flex justify-center space-x-8 mb-8">
+        <a href="https://www.facebook.com/polok.photography.bd" class="social-icon text-3xl text-blue-600"><i class="fab fa-facebook-f"></i></a>
+        <a href="https://www.instagram.com/bijoy_dash1720/?hl=en" class="social-icon text-3xl text-pink-600"><i class="fab fa-instagram"></i></a>
+        <a href="https://wa.me/8801873107499" class="social-icon text-3xl text-green-600"><i class="fab fa-whatsapp"></i></a>
+      </div>
+      <div class="mt-8">
+        <p class="text-xl mb-4 text-gray-700">Visit our Facebook Page:</p>
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://www.facebook.com/polok.photography.bd" alt="Facebook QR Code" class="mx-auto">
+      </div>
+    </div>
+  </section>
+
+  <!-- Payment Methods Section -->
+  <section id="payment" class="py-16 bg-gradient-to-r from-orange-50 to-peach-50 fade-in">
+    <div class="container mx-auto text-center">
+      <h2 class="text-5xl font-bold mb-12 text-gray-800 tracking-wide">Payment Methods</h2>
+      <p class="text-xl mb-8 text-gray-700">We accept payments via:</p>
+      <div class="flex justify-center space-x-12">
+        <div class="text-center">
+          <img src="https://via.placeholder.com/40?text=bKash" alt="bKash Logo" class="payment-icon mx-auto">
+          <p class="text-lg mt-2 text-gray-700">bKash: 01873107499</p>
+        </div>
+        <div class="text-center">
+          <img src="https://via.placeholder.com/40?text=Nagad" alt="Nagad Logo" class="payment-icon mx-auto">
+          <p class="text-lg mt-2 text-gray-700">Nagad: 01873107499</p>
+        </div>
+        <div class="text-center">
+          <img src="https://via.placeholder.com/40?text=Rocket" alt="Rocket Logo" class="payment-icon mx-auto">
+          <p class="text-lg mt-2 text-gray-700">Rocket: 01873107499</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Booking Section -->
+  <section id="booking" class="bg-gradient-to-b from-orange-100 to-peach-100 py-28 fade-in">
+    <div class="container mx-auto text-center">
+      <h2 class="text-5xl font-bold mb-12 text-gray-800 tracking-wide">Book Your Session</h2>
+      <form class="max-w-xl mx-auto bg-white/90 p-10 rounded-2xl shadow-xl">
+        <div class="mb-8">
+          <label for="name" class="block text-left text-gray-800 font-semibold mb-2 text-xl">Name</label>
+          <input type="text" id="name" class="w-full p-4 border rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="Your Name" required>
+        </div>
+        <div class="mb-8">
+          <label for="email" class="block text-left text-gray-800 font-semibold mb-2 text-xl">Email</label>
+          <input type="email" id="email" class="w-full p-4 border rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="Your Email" required>
+        </div>
+        <div class="mb-8">
+          <label for="package" class="block text-left text-gray-800 font-semibold mb-2 text-xl">Select Package</label>
+          <select id="package" class="w-full p-4 border rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500" required>
+            <option value="" disabled selected>Choose a package</option>
+            <option value="basic-wedding">Basic Wedding Combo (17000 BDT)</option>
+            <option value="standard-wedding">Standard Wedding Combo (30000 BDT)</option>
+            <option value="premium-wedding">Premium Wedding Combo (45000 BDT)</option>
+            <option value="package1-photo">Photography Package One (5000 BDT)</option>
+            <option value="package2-photo">Photography Package Two (12000 BDT)</option>
+            <option value="package3-photo">Photography Package Three (21000 BDT)</option>
+            <option value="package1-drone">Drone Cinematography One (7500 BDT)</option>
+            <option value="package2-drone">Drone Cinematography Two (9500 BDT)</option>
+            <option value="package3-drone">Drone Cinematography Three (11500 BDT)</option>
+            <option value="package1-cinema">Cinematography Package One (7000 BDT)</option>
+            <option value="package2-cinema">Cinematography Package Two (9000 BDT)</option>
+            <option value="package3-cinema">Cinematography Package Three (18000 BDT)</option>
+            <option value="package1-combo">Combo Package One (12000 BDT)</option>
+            <option value="package2-combo">Combo Package Two (21000 BDT)</option>
+            <option value="package3-combo">Combo Package Three (39000 BDT)</option>
+          </select>
+        </div>
+        <div class="mb-8">
+          <label for="date" class="block text-left text-gray-800 font-semibold mb-2 text-xl">Preferred Date</label>
+          <input type="date" id="date" class="w-full p-4 border rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500" required>
+        </div>
+        <div class="mb-8">
+          <label for="message" class="block text-left text-gray-800 font-semibold mb-2 text-xl">Additional Details</label>
+          <textarea id="message" class="w-full p-4 border rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500" rows="5" placeholder="Any special requests?"></textarea>
+        </div>
+        <button type="submit" class="btn-primary text-white px-10 py-4 rounded-full font-semibold text-xl">Submit Booking</button>
+      </form>
+      <p class="mt-6 text-gray-700 text-xl">We'll get back to you within 24 hours!</p>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-gradient-to-r from-orange-600 to-red-500 text-white p-6 text-center">
+    <p class="text-xl">Contact: <a href="mailto:nirjordey842@gmail.com" class="underline hover:text-orange-300">nirjordey842@gmail.com</a> | Phone: <a href="tel:+8801873107499" class="underline hover:text-orange-300">+880-1873107499</a></p>
+    <p class="text-xl mt-2">© 2025 Polok. All rights reserved.</p>
+  </footer>
+
+  <script>
+    // Smooth scroll for nav links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        document.querySelector(this.getAttribute('href')).scrollIntoView({
+          behavior: 'smooth'
+        });
+      });
+    });
+
+    // Fade-in animation on scroll
+    const fadeIns = document.querySelectorAll('.fade-in');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1 });
+    fadeIns.forEach(element => observer.observe(element));
+
+    // Basic form submission alert (for demo; replace with actual backend integration)
+    document.querySelector('form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      alert('Booking submitted! We’ll contact you soon.');
+      this.reset();
+    });
+  </script>
+</body>
+</html>
